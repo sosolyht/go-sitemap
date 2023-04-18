@@ -2,6 +2,7 @@ package sitemap
 
 import (
 	"encoding/xml"
+	"log"
 	"os"
 	"time"
 )
@@ -44,31 +45,30 @@ func NewURL() *Sitemap {
 }
 
 func (s *Sitemap) AddURL(url URL) error {
-	s.LastModify()
+	url.LastMod = time.Now().Format("2006-01-02")
 	s.URL = append(s.URL, url)
 
 	resp, err := xml.MarshalIndent(s.URL, "", "   ")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	sm, err := os.Create("sitemaps/sitemap.xml")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	defer sm.Close()
+	defer func() {
+		if err = sm.Close(); err != nil {
+			log.Printf("error closing sitemap file: %v", err)
+		}
+	}()
 
-	sm.Write(resp)
+	if _, err = sm.Write(resp); err != nil {
+		return err
+	}
 
-	return err
-}
-
-func (s *Sitemap) LastModify() {
-	var url URL
-	timeLayout := "2006-01-02"
-	dateString := time.Now().Format(timeLayout)
-	url.LastMod = dateString
+	return nil
 }
 
 func (s *Sitemap) FrequencyAlways() {
