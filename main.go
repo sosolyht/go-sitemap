@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	err := sitemap.NewURL().AddURL(sitemap.URL{
+	err := sitemap.NewURL().AddURL(sitemap.URLs{
 		Loc:        "https://google.com",
 		ChangeFreq: sitemap.MONTHLY,
 		Priority:   0.5,

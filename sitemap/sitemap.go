@@ -2,14 +2,12 @@ package sitemap
 
 import (
 	"encoding/xml"
-	"log"
 	"os"
 	"time"
 )
 
 const (
-	XmlVersion   = `<?xml version="1.0" encoding="UTF-8"?>`
-	SitemapIndex = `<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9">`
+	XMLNS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 )
 
 type ChangeFrequency string
@@ -25,46 +23,47 @@ const (
 )
 
 type Sitemap struct {
-	XMLVersion   string `xml:"xmlVersion,omitempty"`
-	SitemapIndex string `xml:"sitemapindex,omitempty"`
-	URL          []URL  `xml:"url,omitempty"`
+	XMLName xml.Name `xml:"urlset"`
+	Xmlns   string   `xml:"xmlns,attr"`
+	URL     []URLs   `xml:"url,omitempty"`
 }
 
-type URL struct {
-	Loc        string          `xml:"loc"`
-	LastMod    string          `xml:"lastmod"`
+type URLs struct {
+	Loc     string `xml:"loc"`
+	LastMod string `xml:"lastmod"`
+	// Google ignores ChangeFrequency and Priority
+	// https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
 	ChangeFreq ChangeFrequency `xml:"changefreq"`
 	Priority   float32         `xml:"priority"`
 }
 
 func NewURL() *Sitemap {
 	return &Sitemap{
-		XMLVersion:   XmlVersion,
-		SitemapIndex: SitemapIndex,
+		Xmlns: XMLNS,
 	}
 }
 
-func (s *Sitemap) AddURL(url URL) error {
+func (s *Sitemap) AddURL(url URLs) error {
 	url.LastMod = time.Now().Format("2006-01-02")
 	s.URL = append(s.URL, url)
 
-	resp, err := xml.MarshalIndent(s.URL, "", "   ")
+	xmlBytes, err := xml.MarshalIndent(s, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	sm, err := os.Create("sitemaps/sitemap.xml")
+	sitemapFile, err := os.Create("sitemaps/sitemap.xml")
 	if err != nil {
 		return err
 	}
 
-	defer func() {
-		if err = sm.Close(); err != nil {
-			log.Printf("error closing sitemap file: %v", err)
-		}
-	}()
+	defer sitemapFile.Close()
 
-	if _, err = sm.Write(resp); err != nil {
+	if _, err = sitemapFile.Write([]byte(xml.Header)); err != nil {
+		return err
+	}
+
+	if _, err = sitemapFile.Write(xmlBytes); err != nil {
 		return err
 	}
 
@@ -72,36 +71,36 @@ func (s *Sitemap) AddURL(url URL) error {
 }
 
 func (s *Sitemap) FrequencyAlways() {
-	var url URL
+	var url URLs
 	url.ChangeFreq = ALWAYS
 }
 
 func (s *Sitemap) FrequencyHourly() {
-	var url URL
+	var url URLs
 	url.ChangeFreq = HOURLY
 }
 
 func (s *Sitemap) FrequencyDaily() {
-	var url URL
+	var url URLs
 	url.ChangeFreq = DAILY
 }
 
 func (s *Sitemap) FrequencyWeekly() {
-	var url URL
+	var url URLs
 	url.ChangeFreq = WEEKLY
 }
 
 func (s *Sitemap) FrequencyMonthly() {
-	var url URL
+	var url URLs
 	url.ChangeFreq = MONTHLY
 }
 
 func (s *Sitemap) FrequencyYearly() {
-	var url URL
+	var url URLs
 	url.ChangeFreq = YEARLY
 }
 
 func (s *Sitemap) FrequencyNever() {
-	var url URL
+	var url URLs
 	url.ChangeFreq = NEVER
 }
