@@ -1,15 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"github.com/sosolyht/go-sitemap/sitemap"
+	"log"
 )
 
 func main() {
-	err := sitemap.NewURL().AddURL(sitemap.URLs{
-		Loc:        "https://google.com",
-		ChangeFreq: sitemap.MONTHLY,
-		Priority:   0.5,
-	})
-	fmt.Println(err)
+	err := sitemap.NewSitemap().AddURL(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

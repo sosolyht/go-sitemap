@@ -2,7 +2,10 @@ package sitemap
 
 import (
 	"encoding/xml"
+	"io"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -29,23 +32,45 @@ type Sitemap struct {
 }
 
 type URLs struct {
-	Loc     string `xml:"loc"`
-	LastMod string `xml:"lastmod"`
-	// Google ignores ChangeFrequency and Priority
-	// https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
-	ChangeFreq ChangeFrequency `xml:"changefreq"`
-	Priority   float32         `xml:"priority"`
+	Loc        string           `xml:"loc"`
+	LastMod    string           `xml:"lastmod"`
+	ChangeFreq *ChangeFrequency `xml:"changefreq,omitempty"`
+	Priority   *float32         `xml:"priority,omitempty"`
 }
 
-func NewURL() *Sitemap {
+func NewSitemap() *Sitemap {
 	return &Sitemap{
 		Xmlns: XMLNS,
 	}
 }
 
-func (s *Sitemap) AddURL(url URLs) error {
-	url.LastMod = time.Now().Format("2006-01-02")
-	s.URL = append(s.URL, url)
+// AddURL
+// Google ignores ChangeFrequency and Priority
+// https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
+func (s *Sitemap) AddURL(url *string) (err error) {
+	var urls []string
+	if url != nil {
+		urls = []string{*url}
+	} else {
+		urls, err = s.CreateSitemapFromLinksFile()
+		if err != nil {
+			return err
+		}
+	}
+
+	urlList := make([]URLs, 0, len(urls))
+	for i := range urls {
+		lastMod, merr := s.GetLastModifiedOrNow(urls[i])
+		if merr != nil {
+			return merr
+		}
+		urlList = append(urlList, URLs{
+			Loc:     urls[i],
+			LastMod: lastMod,
+		})
+	}
+
+	s.URL = append(s.URL, urlList...)
 
 	xmlBytes, err := xml.MarshalIndent(s, "", "  ")
 	if err != nil {
@@ -67,40 +92,57 @@ func (s *Sitemap) AddURL(url URLs) error {
 		return err
 	}
 
-	return nil
+	return
 }
 
-func (s *Sitemap) FrequencyAlways() {
-	var url URLs
-	url.ChangeFreq = ALWAYS
+func (s *Sitemap) CreateSitemapFromLinksFile() ([]string, error) {
+	linkFile, err := os.Open("sitemaps/links")
+	if err != nil {
+		return nil, err
+	}
+	defer linkFile.Close()
+
+	var links []string
+	data, err := io.ReadAll(linkFile)
+	if err != nil {
+		return nil, err
+	}
+
+	splitLinks := strings.Split(string(data), "\n")
+	for i := range splitLinks {
+		links = append(links, splitLinks[i])
+	}
+
+	return splitLinks, err
 }
 
-func (s *Sitemap) FrequencyHourly() {
-	var url URLs
-	url.ChangeFreq = HOURLY
+func (s *Sitemap) GetLastModifiedOrNow(url string) (string, error) {
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified
+	data, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	lastModified := data.Header["Last-Modified"]
+
+	defer data.Body.Close()
+
+	var lastMod string
+	if len(lastModified) == 0 {
+		lastMod = time.Now().Format("2006-01-02")
+	} else {
+		parseTime, perr := time.Parse(time.RFC1123, lastModified[0])
+		if perr != nil {
+			return "", perr
+		}
+
+		lastMod = parseTime.Format("2006-01-02")
+	}
+	return lastMod, err
 }
 
-func (s *Sitemap) FrequencyDaily() {
-	var url URLs
-	url.ChangeFreq = DAILY
-}
-
-func (s *Sitemap) FrequencyWeekly() {
-	var url URLs
-	url.ChangeFreq = WEEKLY
-}
-
-func (s *Sitemap) FrequencyMonthly() {
-	var url URLs
-	url.ChangeFreq = MONTHLY
-}
-
-func (s *Sitemap) FrequencyYearly() {
-	var url URLs
-	url.ChangeFreq = YEARLY
-}
-
-func (s *Sitemap) FrequencyNever() {
-	var url URLs
-	url.ChangeFreq = NEVER
-}
+// CollectLinksFromURL
+// TODO
+//func (s *Sitemap) CollectLinksFromURL(url string) error {
+//	http.Get(url)
+//	return nil
+//}
