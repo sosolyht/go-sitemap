@@ -26,8 +26,8 @@ const (
 )
 
 type sitemap struct {
-	xMLName xml.Name `xml:"urlset"`
-	xmlns   string   `xml:"xmlns,attr"`
+	XMLName xml.Name `xml:"urlset"`
+	XMLNS   string   `xml:"xmlns,attr"`
 	URL     []URLs   `xml:"url,omitempty"`
 }
 
@@ -40,7 +40,7 @@ type URLs struct {
 
 func NewSitemap() *sitemap {
 	return &sitemap{
-		xmlns: xmlns,
+		XMLNS: xmlns,
 	}
 }
 
@@ -66,7 +66,7 @@ func (s *sitemap) AddURL(url string) (err error) {
 			return merr
 		}
 		s.URL = append(s.URL, URLs{
-			Loc:     url,
+			Loc:     v,
 			LastMod: lastMod,
 		})
 	}
@@ -101,18 +101,18 @@ func (s *sitemap) createSitemapFromLinksFile() ([]string, error) {
 	}
 	defer linkFile.Close()
 
-	var links []string
 	data, err := io.ReadAll(linkFile)
 	if err != nil {
 		return nil, err
 	}
 
+	var links []string
 	splitLinks := strings.Split(string(data), "\n")
 	for i := range splitLinks {
 		links = append(links, splitLinks[i])
 	}
 
-	return splitLinks, err
+	return links, err
 }
 
 func (s *sitemap) getLastModifiedOrNow(url string) (string, error) {
@@ -121,9 +121,9 @@ func (s *sitemap) getLastModifiedOrNow(url string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	lastModified := data.Header["Last-Modified"]
-
 	defer data.Body.Close()
+
+	lastModified := data.Header["Last-Modified"]
 
 	var lastMod string
 	if len(lastModified) == 0 {
