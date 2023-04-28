@@ -9,25 +9,9 @@ import (
 	"time"
 )
 
-const (
-	xmlns = "http://www.sitemaps.org/schemas/sitemap/0.9"
-)
-
-type ChangeFrequency string
-
-const (
-	ALWAYS  ChangeFrequency = "always"
-	HOURLY  ChangeFrequency = "hourly"
-	DAILY   ChangeFrequency = "daily"
-	WEEKLY  ChangeFrequency = "weekly"
-	MONTHLY ChangeFrequency = "monthly"
-	YEARLY  ChangeFrequency = "yearly"
-	NEVER   ChangeFrequency = "never"
-)
-
 type sitemap struct {
 	XMLName xml.Name `xml:"urlset"`
-	XMLNS   string   `xml:"xmlns,attr"`
+	Xmlns   string   `xml:"xmlns,attr"`
 	URL     []URLs   `xml:"url,omitempty"`
 }
 
@@ -40,7 +24,7 @@ type URLs struct {
 
 func NewSitemap() *sitemap {
 	return &sitemap{
-		XMLNS: xmlns,
+		Xmlns: xmlns,
 	}
 }
 

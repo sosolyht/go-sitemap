@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+  <url>
+    <loc>https://www.example.com/videos/video1.html</loc>
+    <video>
+      <video:thumbnail_loc>https://www.example.com/thumbnail/thumbnail1.png</video:thumbnail_loc>
+      <video:title>example1</video:title>
+      <video:description>example1 desc</video:description>
+      <video:content_loc>https://www.example.com</video:content_loc>
+      <video:player_loc>https://www.example.com</video:player_loc>
+    </video>
+  </url>
+  <url>
+    <loc>https://www.example.com/videos/video2.html</loc>
+    <video>
+      <video:thumbnail_loc>https://www.example.com/thumbnail/thumbnail2.png</video:thumbnail_loc>
+      <video:title>example2</video:title>
+      <video:description>example2 desc</video:description>
+      <video:content_loc>https://www.example.com</video:content_loc>
+      <video:player_loc>https://www.example.com</video:player_loc>
+    </video>
+  </url>
+  <url>
+    <loc>https://www.example.com/videos/video3.html</loc>
+    <video>
+      <video:thumbnail_loc>https://www.example.com/thumbnail/thumbnail3.png</video:thumbnail_loc>
+      <video:title>example3</video:title>
+      <video:description>example3 desc</video:description>
+      <video:content_loc>https://www.example.com</video:content_loc>
+      <video:player_loc>https://www.example.com</video:player_loc>
+    </video>
+  </url>
+</urlset>
