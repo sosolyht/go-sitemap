@@ -47,10 +47,12 @@ func NewSitemap() *Sitemap {
 // AddURL
 // Google ignores ChangeFrequency and Priority
 // https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
-func (s *Sitemap) AddURL(url *string) (err error) {
+func (s *Sitemap) AddURL(url string) (err error) {
 	var urls []string
-	if url != nil {
-		urls = []string{*url}
+	if url != "" {
+		urls = []string{
+			url,
+		}
 	} else {
 		urls, err = s.CreateSitemapFromLinksFile()
 		if err != nil {
@@ -58,19 +60,16 @@ func (s *Sitemap) AddURL(url *string) (err error) {
 		}
 	}
 
-	urlList := make([]URLs, 0, len(urls))
-	for i := range urls {
-		lastMod, merr := s.GetLastModifiedOrNow(urls[i])
+	for _, v := range urls {
+		lastMod, merr := s.GetLastModifiedOrNow(v)
 		if merr != nil {
 			return merr
 		}
-		urlList = append(urlList, URLs{
-			Loc:     urls[i],
+		s.URL = append(s.URL, URLs{
+			Loc:     url,
 			LastMod: lastMod,
 		})
 	}
-
-	s.URL = append(s.URL, urlList...)
 
 	xmlBytes, err := xml.MarshalIndent(s, "", "  ")
 	if err != nil {

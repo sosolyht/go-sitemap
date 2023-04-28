@@ -2,22 +2,10 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://google.com</loc>
-    <lastmod>2023-04-25</lastmod>
+    <lastmod>2023-04-28</lastmod>
   </url>
   <url>
-    <loc>https://google.com/test</loc>
-    <lastmod>2023-04-25</lastmod>
-  </url>
-  <url>
-    <loc>https://google.com/test1</loc>
-    <lastmod>2023-04-25</lastmod>
-  </url>
-  <url>
-    <loc>https://google.com/test2</loc>
-    <lastmod>2023-04-25</lastmod>
-  </url>
-  <url>
-    <loc>https://google.com/test3</loc>
-    <lastmod>2023-04-25</lastmod>
+    <loc>https://naver.com</loc>
+    <lastmod>2023-04-28</lastmod>
   </url>
 </urlset>
