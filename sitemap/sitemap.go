@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	XMLNS = "http://www.sitemaps.org/schemas/sitemap/0.9"
+	xmlns = "http://www.sitemaps.org/schemas/sitemap/0.9"
 )
 
 type ChangeFrequency string
@@ -25,9 +25,9 @@ const (
 	NEVER   ChangeFrequency = "never"
 )
 
-type Sitemap struct {
-	XMLName xml.Name `xml:"urlset"`
-	Xmlns   string   `xml:"xmlns,attr"`
+type sitemap struct {
+	xMLName xml.Name `xml:"urlset"`
+	xmlns   string   `xml:"xmlns,attr"`
 	URL     []URLs   `xml:"url,omitempty"`
 }
 
@@ -38,30 +38,30 @@ type URLs struct {
 	Priority   *float32         `xml:"priority,omitempty"`
 }
 
-func NewSitemap() *Sitemap {
-	return &Sitemap{
-		Xmlns: XMLNS,
+func NewSitemap() *sitemap {
+	return &sitemap{
+		xmlns: xmlns,
 	}
 }
 
 // AddURL
 // Google ignores ChangeFrequency and Priority
 // https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
-func (s *Sitemap) AddURL(url string) (err error) {
+func (s *sitemap) AddURL(url string) (err error) {
 	var urls []string
 	if url != "" {
 		urls = []string{
 			url,
 		}
 	} else {
-		urls, err = s.CreateSitemapFromLinksFile()
+		urls, err = s.createSitemapFromLinksFile()
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, v := range urls {
-		lastMod, merr := s.GetLastModifiedOrNow(v)
+		lastMod, merr := s.getLastModifiedOrNow(v)
 		if merr != nil {
 			return merr
 		}
@@ -94,7 +94,7 @@ func (s *Sitemap) AddURL(url string) (err error) {
 	return
 }
 
-func (s *Sitemap) CreateSitemapFromLinksFile() ([]string, error) {
+func (s *sitemap) createSitemapFromLinksFile() ([]string, error) {
 	linkFile, err := os.Open("sitemaps/links")
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func (s *Sitemap) CreateSitemapFromLinksFile() ([]string, error) {
 	return splitLinks, err
 }
 
-func (s *Sitemap) GetLastModifiedOrNow(url string) (string, error) {
+func (s *sitemap) getLastModifiedOrNow(url string) (string, error) {
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified
 	data, err := http.Get(url)
 	if err != nil {
