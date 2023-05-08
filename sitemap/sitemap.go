@@ -3,8 +3,10 @@ package sitemap
 import (
 	"encoding/xml"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -13,6 +15,7 @@ type sitemap struct {
 	XMLName xml.Name `xml:"urlset"`
 	Xmlns   string   `xml:"xmlns,attr"`
 	URL     []URLs   `xml:"url,omitempty"`
+	path    string
 }
 
 type URLs struct {
@@ -60,7 +63,7 @@ func (s *sitemap) AddURL(url string) (err error) {
 		return err
 	}
 
-	sitemapFile, err := os.Create("sitemaps/sitemap.xml")
+	sitemapFile, err := os.Create(s.path)
 	if err != nil {
 		return err
 	}
@@ -76,6 +79,30 @@ func (s *sitemap) AddURL(url string) (err error) {
 	}
 
 	return
+}
+
+func (s *sitemap) Path(path string) *sitemap {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	projectRoot := filepath.Join(currentDir, "..", "..")
+	sitemapsDir := filepath.Join(projectRoot, path)
+
+	_, err = os.Stat(sitemapsDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(sitemapsDir, 0755)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+
+	output := filepath.Join(sitemapsDir, "sitemap.xml")
+	s.path = output
+	return s
 }
 
 func (s *sitemap) createSitemapFromLinksFile() ([]string, error) {

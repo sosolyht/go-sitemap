@@ -2,7 +2,9 @@ package sitemap
 
 import (
 	"encoding/xml"
+	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -11,6 +13,7 @@ type videoSitemap struct {
 	Xmlns      string   `xml:"xmlns,attr"`
 	XmlnsVideo string   `xml:"xmlns:video,attr"`
 	URL        []VideoURL
+	path       string
 }
 
 type VideoURL struct {
@@ -67,7 +70,7 @@ func (v *videoSitemap) AddVideoURL(url VideoURL) (err error) {
 		return err
 	}
 
-	sitemapFile, err := os.Create("sitemaps/sitemap_video.xml")
+	sitemapFile, err := os.Create(v.path)
 	if err != nil {
 		return err
 	}
@@ -83,4 +86,28 @@ func (v *videoSitemap) AddVideoURL(url VideoURL) (err error) {
 	}
 
 	return
+}
+
+func (v *videoSitemap) Path(path string) *videoSitemap {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	projectRoot := filepath.Join(currentDir, "..", "..")
+	sitemapsDir := filepath.Join(projectRoot, path)
+
+	_, err = os.Stat(sitemapsDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(sitemapsDir, 0755)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+
+	output := filepath.Join(sitemapsDir, "sitemap_video.xml")
+	v.path = output
+	return v
 }

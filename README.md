@@ -18,8 +18,8 @@ package main
 import "github.com/sosolyht/go-sitemap/sitemap"
 
 func main() {
-// Create a standard sitemap
-s := sitemap.NewSitemap()
+// Create a sitemap with path
+s := sitemap.NewSitemap().Path("util/sitemaps")
 
 	links := []string{
 		"https://google.com",
