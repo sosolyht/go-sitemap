@@ -107,7 +107,6 @@ func (v *videoSitemap) Path(path string) *videoSitemap {
 		}
 	}
 
-	output := filepath.Join(sitemapsDir, "sitemap_video.xml")
-	v.path = output
+	v.path = filepath.Join(sitemapsDir, "sitemap_video.xml")
 	return v
 }
