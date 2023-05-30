@@ -2,6 +2,7 @@ package sitemap
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -87,7 +88,7 @@ func (s *sitemap) Path(path string) *sitemap {
 		log.Fatal(err)
 	}
 
-	projectRoot := filepath.Join(currentDir, "..", "..")
+	projectRoot := fmt.Sprintf("%s/%s", filepath.Dir(currentDir), filepath.Base(currentDir))
 	sitemapsDir := filepath.Join(projectRoot, path)
 
 	_, err = os.Stat(sitemapsDir)
