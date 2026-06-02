@@ -2,8 +2,7 @@ package sitemap
 
 import (
 	"encoding/xml"
-	"fmt"
-	"log"
+	"errors"
 	"os"
 	"path/filepath"
 	"time"
@@ -29,17 +28,17 @@ type Video struct {
 	Description          string       `xml:"video:description"`
 	ContentLoc           string       `xml:"video:content_loc"`
 	PlayerLoc            string       `xml:"video:player_loc"`
-	Duration             *int         `xml:"video:duration,omitempty"`              // Optional
-	Rating               *float64     `xml:"video:rating,omitempty"`                // Optional
-	ViewCount            *int         `xml:"video:view_count,omitempty"`            // Optional
-	PublicationDate      *time.Time   `xml:"video:publication_date,omitempty"`      // Optional
-	ExpirationDate       *time.Time   `xml:"video:expiration_date,omitempty"`       // Optional
-	FamilyFriendly       *string      `xml:"video:family_friendly,omitempty"`       // Optional
-	Restriction          *Restriction `xml:"video:restriction,omitempty"`           // Optional
-	Price                *Price       `xml:"video:price,omitempty"`                 // Optional
-	RequiresSubscription *string      `xml:"video:requires_subscription,omitempty"` // Optional
-	Uploader             *Uploader    `xml:"video:uploader,omitempty"`              // Optional
-	Live                 *string      `xml:"video:live,omitempty"`                  // Optional
+	Duration             *int         `xml:"video:duration,omitempty"`
+	Rating               *float64     `xml:"video:rating,omitempty"`
+	ViewCount            *int         `xml:"video:view_count,omitempty"`
+	PublicationDate      *time.Time   `xml:"video:publication_date,omitempty"`
+	ExpirationDate       *time.Time   `xml:"video:expiration_date,omitempty"`
+	FamilyFriendly       *string      `xml:"video:family_friendly,omitempty"`
+	Restriction          *Restriction `xml:"video:restriction,omitempty"`
+	Price                *Price       `xml:"video:price,omitempty"`
+	RequiresSubscription *string      `xml:"video:requires_subscription,omitempty"`
+	Uploader             *Uploader    `xml:"video:uploader,omitempty"`
+	Live                 *string      `xml:"video:live,omitempty"`
 }
 
 type Restriction struct {
@@ -59,13 +58,37 @@ type Uploader struct {
 
 func NewVideoSitemap() *videoSitemap {
 	return &videoSitemap{
-		Xmlns:      "http://www.sitemaps.org/schemas/sitemap/0.9",
-		XmlnsVideo: "http://www.google.com/schemas/sitemap-video/1.1",
+		Xmlns:      xmlns,
+		XmlnsVideo: xmlnsVideo,
 	}
 }
 
-func (v *videoSitemap) AddVideoURL(url VideoURL) (err error) {
+// Path sets the output directory (relative to the process working directory)
+// and configures sitemap_video.xml as the output file.
+func (v *videoSitemap) Path(dir string) (*videoSitemap, error) {
+	outDir, err := ensureOutputDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	v.path = filepath.Join(outDir, "sitemap_video.xml")
+	return v, nil
+}
+
+// AddVideoURL appends a video URL entry. Call Save to write the XML file.
+func (v *videoSitemap) AddVideoURL(url VideoURL) error {
 	v.URL = append(v.URL, url)
+	return nil
+}
+
+// Save writes the accumulated video URLs to the video sitemap XML file.
+func (v *videoSitemap) Save() error {
+	if v.path == "" {
+		return errors.New("sitemap: call Path before Save")
+	}
+	if len(v.URL) == 0 {
+		return errors.New("sitemap: no video URLs to write")
+	}
+
 	xmlBytes, err := xml.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
@@ -75,39 +98,14 @@ func (v *videoSitemap) AddVideoURL(url VideoURL) (err error) {
 	if err != nil {
 		return err
 	}
-
 	defer sitemapFile.Close()
 
 	if _, err = sitemapFile.Write([]byte(xml.Header)); err != nil {
 		return err
 	}
-
 	if _, err = sitemapFile.Write(xmlBytes); err != nil {
 		return err
 	}
 
-	return
-}
-
-func (v *videoSitemap) Path(path string) *videoSitemap {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	projectRoot := fmt.Sprintf("%s/%s", filepath.Dir(currentDir), filepath.Base(currentDir))
-	sitemapsDir := filepath.Join(projectRoot, path)
-
-	_, err = os.Stat(sitemapsDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.MkdirAll(sitemapsDir, 0755)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-
-	v.path = filepath.Join(sitemapsDir, "sitemap_video.xml")
-	return v
+	return nil
 }

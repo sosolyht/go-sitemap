@@ -1,31 +1,27 @@
 package main
 
-import "github.com/sosolyht/go-sitemap/sitemap"
+import (
+	"log"
+
+	"github.com/sosolyht/go-sitemap/sitemap"
+)
 
 func main() {
-	vs := sitemap.NewVideoSitemap().Path("sitemaps")
+	vs, err := sitemap.NewVideoSitemap().Path("sitemaps")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	videoURLs := []sitemap.VideoURL{
 		{
 			Loc: "https://www.example.com/videos/video1.html",
 			Videos: []sitemap.Video{
 				{
-					ThumbnailLoc:         "https://www.example.com/thumbnail/thumbnail1.png",
-					Title:                "example1",
-					Description:          "example1 desc",
-					ContentLoc:           "https://www.example.com",
-					PlayerLoc:            "https://www.example.com",
-					Duration:             nil,
-					Rating:               nil,
-					ViewCount:            nil,
-					PublicationDate:      nil,
-					ExpirationDate:       nil,
-					FamilyFriendly:       nil,
-					Restriction:          nil,
-					Price:                nil,
-					RequiresSubscription: nil,
-					Uploader:             nil,
-					Live:                 nil,
+					ThumbnailLoc: "https://www.example.com/thumbnail/thumbnail1.png",
+					Title:        "example1",
+					Description:  "example1 desc",
+					ContentLoc:   "https://www.example.com",
+					PlayerLoc:    "https://www.example.com",
 				},
 			},
 		},
@@ -33,22 +29,11 @@ func main() {
 			Loc: "https://www.example.com/videos/video2.html",
 			Videos: []sitemap.Video{
 				{
-					ThumbnailLoc:         "https://www.example.com/thumbnail/thumbnail2.png",
-					Title:                "example2",
-					Description:          "example2 desc",
-					ContentLoc:           "https://www.example.com",
-					PlayerLoc:            "https://www.example.com",
-					Duration:             nil,
-					Rating:               nil,
-					ViewCount:            nil,
-					PublicationDate:      nil,
-					ExpirationDate:       nil,
-					FamilyFriendly:       nil,
-					Restriction:          nil,
-					Price:                nil,
-					RequiresSubscription: nil,
-					Uploader:             nil,
-					Live:                 nil,
+					ThumbnailLoc: "https://www.example.com/thumbnail/thumbnail2.png",
+					Title:        "example2",
+					Description:  "example2 desc",
+					ContentLoc:   "https://www.example.com",
+					PlayerLoc:    "https://www.example.com",
 				},
 			},
 		},
@@ -56,28 +41,23 @@ func main() {
 			Loc: "https://www.example.com/videos/video3.html",
 			Videos: []sitemap.Video{
 				{
-					ThumbnailLoc:         "https://www.example.com/thumbnail/thumbnail3.png",
-					Title:                "example3",
-					Description:          "example3 desc",
-					ContentLoc:           "https://www.example.com",
-					PlayerLoc:            "https://www.example.com",
-					Duration:             nil,
-					Rating:               nil,
-					ViewCount:            nil,
-					PublicationDate:      nil,
-					ExpirationDate:       nil,
-					FamilyFriendly:       nil,
-					Restriction:          nil,
-					Price:                nil,
-					RequiresSubscription: nil,
-					Uploader:             nil,
-					Live:                 nil,
+					ThumbnailLoc: "https://www.example.com/thumbnail/thumbnail3.png",
+					Title:        "example3",
+					Description:  "example3 desc",
+					ContentLoc:   "https://www.example.com",
+					PlayerLoc:    "https://www.example.com",
 				},
 			},
 		},
 	}
 
-	for i := range videoURLs {
-		vs.AddVideoURL(videoURLs[i])
+	for _, videoURL := range videoURLs {
+		if err := vs.AddVideoURL(videoURL); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if err := vs.Save(); err != nil {
+		log.Fatal(err)
 	}
 }

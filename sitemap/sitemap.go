@@ -2,15 +2,17 @@ package sitemap
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 )
+
+var defaultHTTPClient = &http.Client{Timeout: 15 * time.Second}
 
 type sitemap struct {
 	XMLName xml.Name `xml:"urlset"`
@@ -32,15 +34,28 @@ func NewSitemap() *sitemap {
 	}
 }
 
-// AddURL
-// Google ignores ChangeFrequency and Priority
+// Path sets the output directory (relative to the process working directory)
+// and configures sitemap.xml as the output file.
+func (s *sitemap) Path(dir string) (*sitemap, error) {
+	outDir, err := ensureOutputDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	s.path = filepath.Join(outDir, "sitemap.xml")
+	return s, nil
+}
+
+// AddURL appends a URL to the sitemap. Pass an empty string to load URLs from
+// sitemaps/links (one URL per line). Call Save to write the XML file.
+//
+// Google ignores ChangeFrequency and Priority:
 // https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
-func (s *sitemap) AddURL(url string) (err error) {
+func (s *sitemap) AddURL(url string) error {
 	var urls []string
+	var err error
+
 	if url != "" {
-		urls = []string{
-			url,
-		}
+		urls = []string{url}
 	} else {
 		urls, err = s.createSitemapFromLinksFile()
 		if err != nil {
@@ -49,7 +64,10 @@ func (s *sitemap) AddURL(url string) (err error) {
 	}
 
 	for _, v := range urls {
-		lastMod, merr := s.getLastModifiedOrNow(v)
+		if strings.TrimSpace(v) == "" {
+			continue
+		}
+		lastMod, merr := getLastModifiedOrNow(v)
 		if merr != nil {
 			return merr
 		}
@@ -57,6 +75,18 @@ func (s *sitemap) AddURL(url string) (err error) {
 			Loc:     v,
 			LastMod: lastMod,
 		})
+	}
+
+	return nil
+}
+
+// Save writes the accumulated URLs to the sitemap XML file.
+func (s *sitemap) Save() error {
+	if s.path == "" {
+		return errors.New("sitemap: call Path before Save")
+	}
+	if len(s.URL) == 0 {
+		return errors.New("sitemap: no URLs to write")
 	}
 
 	xmlBytes, err := xml.MarshalIndent(s, "", "  ")
@@ -68,41 +98,16 @@ func (s *sitemap) AddURL(url string) (err error) {
 	if err != nil {
 		return err
 	}
-
 	defer sitemapFile.Close()
 
 	if _, err = sitemapFile.Write([]byte(xml.Header)); err != nil {
 		return err
 	}
-
 	if _, err = sitemapFile.Write(xmlBytes); err != nil {
 		return err
 	}
 
-	return
-}
-
-func (s *sitemap) Path(path string) *sitemap {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	projectRoot := fmt.Sprintf("%s/%s", filepath.Dir(currentDir), filepath.Base(currentDir))
-	sitemapsDir := filepath.Join(projectRoot, path)
-
-	_, err = os.Stat(sitemapsDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.MkdirAll(sitemapsDir, 0755)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-
-	s.path = filepath.Join(sitemapsDir, "sitemap.xml")
-	return s
+	return nil
 }
 
 func (s *sitemap) createSitemapFromLinksFile() ([]string, error) {
@@ -118,41 +123,38 @@ func (s *sitemap) createSitemapFromLinksFile() ([]string, error) {
 	}
 
 	var links []string
-	splitLinks := strings.Split(string(data), "\n")
-	for i := range splitLinks {
-		links = append(links, splitLinks[i])
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			links = append(links, line)
+		}
 	}
 
-	return links, err
+	return links, nil
 }
 
-func (s *sitemap) getLastModifiedOrNow(url string) (string, error) {
+func getLastModifiedOrNow(url string) (string, error) {
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified
-	data, err := http.Get(url)
+	resp, err := defaultHTTPClient.Get(url)
 	if err != nil {
 		return "", err
 	}
-	defer data.Body.Close()
+	defer resp.Body.Close()
+	_, _ = io.Copy(io.Discard, resp.Body)
 
-	lastModified := data.Header["Last-Modified"]
-
-	var lastMod string
-	if len(lastModified) == 0 {
-		lastMod = time.Now().Format("2006-01-02")
-	} else {
-		parseTime, perr := time.Parse(time.RFC1123, lastModified[0])
-		if perr != nil {
-			return "", perr
-		}
-
-		lastMod = parseTime.Format("2006-01-02")
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return time.Now().Format("2006-01-02"), nil
 	}
-	return lastMod, err
-}
 
-// CollectLinksFromURL
-// TODO
-//func (s *Sitemap) CollectLinksFromURL(url string) error {
-//	http.Get(url)
-//	return nil
-//}
+	lastModified := resp.Header.Get("Last-Modified")
+	if lastModified == "" {
+		return time.Now().Format("2006-01-02"), nil
+	}
+
+	parseTime, err := time.Parse(time.RFC1123, lastModified)
+	if err != nil {
+		return "", fmt.Errorf("sitemap: parse Last-Modified for %q: %w", url, err)
+	}
+
+	return parseTime.Format("2006-01-02"), nil
+}

@@ -15,29 +15,47 @@ Here is an example of how to use the Go Sitemap Generator library to create both
 ```go
 package main
 
-import "github.com/sosolyht/go-sitemap/sitemap"
+import (
+	"log"
+
+	"github.com/sosolyht/go-sitemap/sitemap"
+)
 
 func main() {
-// Create a sitemap with path
-s := sitemap.NewSitemap().Path("util/sitemaps")
+	s, err := sitemap.NewSitemap().Path("sitemaps")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	links := []string{
 		"https://google.com",
 		"https://naver.com",
 	}
 	for _, link := range links {
-		s.AddURL(link)
+		if err := s.AddURL(link); err != nil {
+			log.Fatal(err)
+		}
+	}
+	if err := s.Save(); err != nil {
+		log.Fatal(err)
 	}
 
-	// Create a video sitemap
-	vs := sitemap.NewVideoSitemap()
+	vs, err := sitemap.NewVideoSitemap().Path("sitemaps")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	videoURLs := []sitemap.VideoURL{
 		// ... (the example video URLs)
 	}
 
 	for _, videoURL := range videoURLs {
-		vs.AddVideoURL(videoURL)
+		if err := vs.AddVideoURL(videoURL); err != nil {
+			log.Fatal(err)
+		}
+	}
+	if err := vs.Save(); err != nil {
+		log.Fatal(err)
 	}
 }
 ```
