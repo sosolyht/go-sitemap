@@ -10,19 +10,37 @@ import (
 	"time"
 )
 
+func chdir(t *testing.T, dir string) {
+	t.Helper()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(wd)
+	})
+}
+
 func TestEnsureOutputDir(t *testing.T) {
 	dir := t.TempDir()
-	t.Chdir(dir)
+	chdir(t, dir)
 
 	out, err := ensureOutputDir("generated")
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(dir, "generated")
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(cwd, "generated")
 	if out != want {
 		t.Fatalf("got %q, want %q", out, want)
 	}
-	if _, err := os.Stat(want); err != nil {
+	if _, err := os.Stat(out); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -45,7 +63,7 @@ func TestGetLastModifiedOrNow(t *testing.T) {
 
 func TestSitemapSave(t *testing.T) {
 	dir := t.TempDir()
-	t.Chdir(dir)
+	chdir(t, dir)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Last-Modified", "Mon, 15 Mar 2024 12:00:00 GMT")
@@ -78,7 +96,7 @@ func TestSitemapSave(t *testing.T) {
 
 func TestVideoSitemapSave(t *testing.T) {
 	dir := t.TempDir()
-	t.Chdir(dir)
+	chdir(t, dir)
 
 	v, err := NewVideoSitemap().Path("out")
 	if err != nil {
