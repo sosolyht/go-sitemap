@@ -6,7 +6,7 @@ A flexible library for creating sitemap and google video sitemaps in Go
 ## Installation
 
 ```bash
-go get -u github.com/sosolyht/go-sitemap/sitemap
+go get github.com/sosolyht/go-sitemap/sitemap@v1.0.0
 ```
 
 ## Usage

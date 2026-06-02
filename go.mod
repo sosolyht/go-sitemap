@@ -1,3 +1,3 @@
 module github.com/sosolyht/go-sitemap
 
-go 1.20
+go 1.22
